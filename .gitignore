@@ -1,0 +1,19 @@
+# Eclipse Specific Ignores
+.cache
+.classpath
+.project
+.settings
+
+# Ensime Specific Ignores
+.ensime
+
+# SBT Specific Ignores
+project
+target
+
+# Emacs Specific Ignores
+*~
+\#*\#
+
+# OSX Specific Ignores
+.DS_Store
