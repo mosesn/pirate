@@ -10,100 +10,47 @@ object Argh extends Parsers {
 
   val emptyCharSequenceReader = new CharSequenceReader("")
   
-  val HyphenParser = new Parser[Unit] {
-    def apply(input: Input): ParseResult[Unit] = input match {
-      case finished: Input if finished.atEnd => Failure("No hyphen found.", input.rest)
-      case unfinished: Input => unfinished.first match {
-        case whiteSpace: Char if whiteSpace.isWhitespace => this(unfinished.rest)
-        case '-' => Success(Unit, unfinished.rest)
-        case _ => Failure("Invalid character, no hyphen found.", unfinished.rest)
-      }
-    }
-  }
+  val HyphenParser: Parser[Elem] = elem('-')
+ 
+  val WhitespaceParser = rep(acceptIf(_.isWhitespace)((err: Char) => "%c is not whitespaces.".format(err)))
+    
+  val WhitespaceHyphenParser = WhitespaceParser ~ HyphenParser
+    
+  val OptionsParser: String => Parser[Arguments] = (flags: String) => opt((WhitespaceHyphenParser ~ 
+      OptFlagsParser(flags)) map (_._2)) map (_.getOrElse(Arguments(Set.empty[Char])))
   
-//  val CoolHyphenParser = this.acceptIf(x: Char => (x.isWhitespace || (x == '-')))
-  
-  val OptionsParser: String => Parser[Arguments] = (flags: String) => opt((HyphenParser ~ OptFlagsParser(flags)) map {
-    case result => result._2
-  }) map {
-    case Some(arguments) => arguments
-    case None => Arguments(Set.empty[Char])
-  }
+  val OptFlagParser: String => Parser[Elem] = (flags: String) => 
+    acceptIf(flags.contains(_))((err: Char) => "%c is not a valid flag.")
 
-  val OptFlagsParser: String => Parser[Arguments] = (flags: String) => new Parser[Arguments] {
-    def apply(input: Input): ParseResult[Arguments] = input match {
-      case finished: Input if finished.atEnd => Success(Arguments(Set.empty[Char]), emptyCharSequenceReader)
-      case contained: Input if flags.contains(contained.first) => {
-        this(input.rest) match {
-          case Success(results, rest) => Success(results.addFlag(input.first), rest)
-          case failure: NoSuccess => failure
-        }
-      }
-      case invalid => Failure("Not a valid character: %c.".format(invalid), input.rest)
-    }
-  }
-  
-  val FlagsParser = new Parser[String] {
-    def apply(input: Input): ParseResult[String] = input match {
-      case finished: Input if finished.atEnd =>
-        Failure("Did not end with ]", emptyCharSequenceReader)
-      case unfinished: Input => {
-        val first = unfinished.first
-        val rest = unfinished.rest
-        first match {
-          case letter: Char if letter.isLetter => this(rest) match {
-            case Success(result, rest) => Success(result + first, rest)
-            case failure: NoSuccess => failure
-          }
-          case letter: Char if letter.isWhitespace => this(rest)
-          case ']' => Success("", rest)
-          case _ => Failure("Expected letter or whitepsace.", rest)
-        }
-      }
-    }
-  }
-  
-  val BracketStartedParser = new Parser[Parser[Arguments]] {
-    def apply(input: Input): ParseResult[Parser[Arguments]] = input match {
-      case finished: Input if finished.atEnd => 
-        Failure("Did not end with ], expected -", emptyCharSequenceReader)
-      case unfinished: Input => {
-        val first = unfinished.first
-        val rest = unfinished.rest
-        first match {
-          case '-' => FlagsParser(rest) match {
-            case Success(results, rest) => Success(OptionsParser(results), rest)
-            case failure: NoSuccess => failure
-          }
-          case char: Char if char.isWhitespace => this(rest)
-          case other => Failure("Expected -, found %c".format(other), rest)
-        }
-      }
-      case _ => throw new Exception("Input is not of type Input.")
-    }
-  }
-  
-  val HelpTextParser = new Parser[Parser[Arguments]] {
-    def apply(input: Input): ParseResult[Parser[Arguments]] = input match {
-      case finished: Input if (finished.atEnd) => Success((new Parser[Arguments] {
-        def apply(input: Input): ParseResult[Arguments] = 
-          Success(Arguments(Set.empty[Char]), emptyCharSequenceReader)
-      }), emptyCharSequenceReader)
-      case unfinished: Input => {
-        val first = unfinished.first
-        val rest = unfinished.rest
-        first match {
-          case '[' => BracketStartedParser(unfinished.rest)
-          case char: Char if char.isWhitespace => this(rest)
-          case _ => Failure("Did not start with [", rest)
-        }
-      }
-      case _ => throw new Exception("Input is not of type Input.")
-    }
-  }
+  val OptFlagsParser: String => Parser[Arguments] = (flags: String) => 
+    rep1(OptFlagParser(flags)) map { elems: List[Char] => Arguments(elems.toSet) }
 
+  val FlagsParser: Parser[String] = rep1(LetterParser) map (_.mkString)
+    
+  val LetterParser = acceptIf(_.isLetter)((err: Char) => "%c should have been a letter.".format(err))
+  
+  val AllFlagsParser = new Parser[Parser[Arguments]] {
+    def apply(input: Input): ParseResult[Parser[Arguments]] = FlagsParser(input) match {
+      case Success(results, rest) => Success(OptionsParser(results), rest)
+      case failure: NoSuccess => failure
+    }
+  }
+  
+  val MeatParser: Parser[Parser[Arguments]] = (WhitespaceHyphenParser ~ AllFlagsParser ~ WhitespaceParser) map (_._1._2)
+  
+  val BeginBracketParser = elem('[')
+  
+  val EndBracketParser = elem(']')
+
+  val HelpTextParser: Parser[Parser[Arguments]] = phrase(opt((WhitespaceParser ~ BeginBracketParser ~
+      MeatParser ~ EndBracketParser ~ WhitespaceParser)) map { _ match {
+      case Some(parser) => parser._1._1._2
+      case None => OptionsParser("")
+    }
+  })
+  
   def apply(helpText: String)(flags: String): Arguments = HelpTextParser(new CharSequenceReader(helpText)) match {
-    case Success(parser: Parser[Arguments], _) => parser(new CharSequenceReader(flags)) match {
+    case Success(parser, _) => parser(new CharSequenceReader(flags)) match {
       case Success(results, _) => results
       case failure: NoSuccess => scala.sys.error(failure.msg)
     }
@@ -113,4 +60,8 @@ object Argh extends Parsers {
 
 case class Arguments(flags: Set[Char]) {
   def addFlag(flag: Char): Arguments = this.copy(flags = flags + flag)
+}
+
+object Arguments {
+  lazy val empty = Arguments(Set.empty[Char])
 }
