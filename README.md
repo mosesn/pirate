@@ -27,13 +27,16 @@ from the beginning.  I still don't know whether I prefer pirate or Argh,
 and I might want to return to my Argh ways once I've figured out pirate, but  
 I've been able to be much more expressive by just parsing based on the raw  
 parsing library, rather than the RegexParsers String parsing library, which  
-did too much for me.
+did too much for me.  
+  
+After some time of toughing it out without regex, I realized it was just sort of  
+dumb to not use the RegexParsers library, so now I'm using a combination of RegexParsers  
+and raw Parsers.
 
 ##DSL
 
 ###Help Text
-Should all be a single String of flags in square brackets, started by a hyphen.  
-Example: "  [ -fad ] " (whitespace is fine, except in the flags).
+Help text comes in several different flavors.  There are flags, 
 
 ###Arguments
 Should all be a single String of flags, no square brackets, started by a hyphen.  
