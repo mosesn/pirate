@@ -29,14 +29,9 @@ object Argh extends JavaTokenParsers {
 
   val EndBracketParser = WhitespaceParser ~> elem(']')
 
-  def OptionMultiArgSchema: Parser[Parser[Arguments]] = {
+  def OptionMultiArgSchema: Parser[Pair[Parser[Arguments], Boolean]] = {
     println("about to move to multi")
-    val bleh = BeginBracketParser ~ MultiArgSchema ~ EndBracketParser map {
-      case _ ~ multi ~ _ => opt(multi) map {
-        case Some(summat) => summat
-        case None => Arguments.empty
-      }
-    }
+    val bleh = BeginBracketParser ~> MultiArgSchema <~ EndBracketParser map (Pair(_, false))
     println("about to move out of multi")
     bleh
   }
@@ -96,11 +91,11 @@ object Argh extends JavaTokenParsers {
 
   lazy val NumberParser = DoubleParser | IntegerParser
 
-  lazy val HyphenStartedSchema: Parser[Parser[Arguments]] = HyphenParser ~> (NumberParser | AllFlagsParser)
+  lazy val HyphenStartedSchema: Parser[Pair[Parser[Arguments], Boolean]] = HyphenParser ~> (NumberParser | AllFlagsParser) map (Pair(_, true))
 
-  val ArgSchema: Parser[Parser[Arguments]] = (OptionMultiArgSchema | HyphenStartedSchema)
+  val ArgSchema: Parser[Pair[Parser[Arguments], Boolean]] = (OptionMultiArgSchema | HyphenStartedSchema)
 
-  def MultiArgSchema: Parser[Parser[Arguments]] = handleMultiArgs(tmp)
+  def MultiArgSchema: Parser[Parser[Arguments]] = handleMultiArgsFancy(tmp)
 
   lazy val tmp = repsep(ArgSchema, WhitespaceParser)
 
@@ -111,14 +106,60 @@ object Argh extends JavaTokenParsers {
       } getOrElse success(Arguments.empty)
     }
 
-  def handleMultiArgsFancy(top: Parser[List[Parser[Arguments]]]): Parser[Parser[Arguments]] =
-    top map {parsers =>
-      parseAnd(Set(), parsers.toSet)
+  def handleMultiArgsFancy(top: Parser[List[Pair[Parser[Arguments], Boolean]]]): Parser[Parser[Arguments]] =
+    top map {list =>
+      val (nonoptional, optional) = list.partition(_._2)
+      andWithRepetition(optional map (_._1), nonoptional map (_._1),
+        (first: Arguments, second: Arguments) => first + second,
+        Arguments.empty)
     }
 
+  def andWithRepetition[T](parsed: List[Parser[T]],
+    unparsed: List[Parser[T]],
+    reducer: (T, T) => T,
+    default: T): Parser[T] = andWithRepetition(ParserHelper(parsed, unparsed, reducer, default))
+
+  private[this] def applyReducer[T](concat: ~[T, T], reducer: (T, T) => T) = concat match {
+    case f ~ s => reducer(f, s)
+  }
+
+  case class ParserHelper[T](parsed: List[Parser[T]],
+    unparsed: List[Parser[T]],
+    reducer: (T, T) => T,
+    default: T) {
+    def useParser(parser: Parser[T]) = this.copy(parsed = parser :: this.parsed,
+      unparsed = this.unparsed filterNot (_ == parser))
+  }
+
+  object ParserHelper {
+    def apply[T](list: List[Parser[T]], reducer: (T, T) => T, default: T): ParserHelper[T] =
+      ParserHelper(List(), list, reducer, default)
+  }
+
+  private[this] def andWithRepetition[T](helper: ParserHelper[T]): Parser[T] = Pair(helper.unparsed, helper.parsed) match {
+    case (Nil, Nil) => success(helper.default)
+    case (Nil, list) => rep(list reduce (_ | _)) map {arg =>
+      arg reduceOption (helper.reducer(_, _)) getOrElse helper.default
+    }
+    case (_, Nil) => parseUnparsed(helper)
+    case (_, _) => parseUnparsed(helper) | parseParsed(helper)
+  }
+
+  private[this] def parseParsed[T](helper: ParserHelper[T]) =
+    (helper.parsed reduce (_ | _)) ~ andWithRepetition(helper) map {
+      applyReducer(_, helper.reducer)
+    }
+
+  private[this] def parseUnparsed[T](helper: ParserHelper[T]) = (helper.unparsed map {parser =>
+    parser ~ andWithRepetition(helper.useParser(parser)) map (
+      applyReducer(_, helper.reducer)
+    )
+  }) reduce (_ | _)
+
+
   lazy val OptionArgSchema: Parser[Parser[Arguments]] =
-    BeginBracketParser ~> ArgSchema <~ EndBracketParser map {
-      opt(_) map {
+    BeginBracketParser ~> ArgSchema <~ EndBracketParser map {pair =>
+      opt(pair._1) map {
         case Some(args) => args
         case None => Arguments.empty
       }
