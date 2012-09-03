@@ -187,46 +187,27 @@ class ArgSpec extends FunSpec with ShouldMatchers{
         assert(Argh.FlagsParser(new CharSequenceReader("abcdefgh")).get === "abcdefgh")
       }
     }
-    describe("AllFlagsParser") {
+    describe("AllFlagsSchema") {
       it("Should take a letter and another letter and return a nice Arguments of just that letter.") {
-        assert(Argh.AllFlagsParser(new CharSequenceReader("a")).get(new CharSequenceReader("-a")).get === Arguments.empty.copy(flags = Set('a')))
+        assert(Argh.AllFlagsSchema(new CharSequenceReader("a")).get(new CharSequenceReader("-a")).get === Arguments.empty.copy(flags = Set('a')))
       }
       it("Should take a few letters and another letter and get just one of them.") {
-        assert(Argh.AllFlagsParser(new CharSequenceReader("ab")).get(new CharSequenceReader("-a")).get === Arguments.empty.copy(flags = Set('a')))
+        assert(Argh.AllFlagsSchema(new CharSequenceReader("ab")).get(new CharSequenceReader("-a")).get === Arguments.empty.copy(flags = Set('a')))
       }
       it("Should take a few letters and another letter and get just one of them, many times.") {
-        assert(Argh.AllFlagsParser(new CharSequenceReader("ab")).get(new CharSequenceReader("-aaaaa")).get === Arguments.empty.copy(flags = Set('a')))
+        assert(Argh.AllFlagsSchema(new CharSequenceReader("ab")).get(new CharSequenceReader("-aaaaa")).get === Arguments.empty.copy(flags = Set('a')))
       }
       it("Should take a few letters and another letter and get both of them.") {
-        assert(Argh.AllFlagsParser(new CharSequenceReader("ab")).get(new CharSequenceReader("-ab")).get === Arguments.empty.copy(flags = Set('a', 'b')))
+        assert(Argh.AllFlagsSchema(new CharSequenceReader("ab")).get(new CharSequenceReader("-ab")).get === Arguments.empty.copy(flags = Set('a', 'b')))
       }
       it("Should take a few letters and another letter and get both of them, many times.") {
-        assert(Argh.AllFlagsParser(new CharSequenceReader("ab")).get(new CharSequenceReader("-abbaba")).get === Arguments.empty.copy(flags = Set('a', 'b')))
+        assert(Argh.AllFlagsSchema(new CharSequenceReader("ab")).get(new CharSequenceReader("-abbaba")).get === Arguments.empty.copy(flags = Set('a', 'b')))
       }
       it("Should take many different letters, and get just two of them.") {
-        assert(Argh.AllFlagsParser(new CharSequenceReader("abcdefgh")).get(new CharSequenceReader("-abbaba")).get === Arguments.empty.copy(flags = Set('a', 'b')))
+        assert(Argh.AllFlagsSchema(new CharSequenceReader("abcdefgh")).get(new CharSequenceReader("-abbaba")).get === Arguments.empty.copy(flags = Set('a', 'b')))
       }
       it("Should take many different letters, and get all of them.") {
-        assert(Argh.AllFlagsParser(new CharSequenceReader("abcdefgh")).get(new CharSequenceReader("-abcdefgh")).get === Arguments.empty.copy(flags = Set('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')))
-      }
-    }
-    describe("Innteger") {
-      it("Should take a 0 and get a 0 back.") {
-        assert(Argh.Innteger(new CharSequenceReader("0")).get === 0)
-      }
-      it("Should take a 123456 and get a 123456 back.") {
-        assert(Argh.Innteger(new CharSequenceReader("123456")).get === 123456)
-      }
-    }
-    describe("Douuble") {
-      it("Should take a 0 and get a 0 back.") {
-        Argh.Doouble(new CharSequenceReader("0.0")).get should be (0.0)
-      }
-      it("Should take a 123.456 and get a 123.456 back.") {
-        Argh.Doouble(new CharSequenceReader("123.456")).get should be (123.456 plusOrMinus 0.0001)
-      }
-      it("Should take a .456 and get a .456 back.") {
-        Argh.Doouble(new CharSequenceReader(".456")).get should be  (.456 plusOrMinus 0.0001)
+        assert(Argh.AllFlagsSchema(new CharSequenceReader("abcdefgh")).get(new CharSequenceReader("-abcdefgh")).get === Arguments.empty.copy(flags = Set('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')))
       }
     }
     describe("IntParser") {
@@ -235,17 +216,6 @@ class ArgSpec extends FunSpec with ShouldMatchers{
       }
       it("Should take a 456 and get a 0 back.") {
         assert(Argh.IntParser('f')(new CharSequenceReader("-f 456")).get === Arguments.empty.copy(intMap = Map('f' -> 456)))
-      }
-    }
-    describe("WhiteSpacedInt") {
-      it("Should take the word int with one space.") {
-        Argh.WhiteSpacedInt(new CharSequenceReader(" int")).get
-      }
-      it("Should take the word int with spaces.") {
-        Argh.WhiteSpacedInt(new CharSequenceReader("    int")).get
-      }
-      it("Should take the word int without spaces.") {
-        Argh.WhiteSpacedInt(new CharSequenceReader("int")).get
       }
     }
     describe("IntegerParser") {
@@ -381,9 +351,7 @@ class ArgSpec extends FunSpec with ShouldMatchers{
       }
       it("Should take an optional flag and return a nice Arguments of just that flag.") {
         val tmp = Argh.MultiArgSchema(new CharSequenceReader("[-a]")).get
-        println("ESCAPE")
         val bleh = tmp(new CharSequenceReader("-a")).get
-        println("again")
         assert(bleh === Arguments.empty.copy(flags = Set('a')))
       }
       it("Should take an optional flag and a few of the same argument, and understand it.") {
