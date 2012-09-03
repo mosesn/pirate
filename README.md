@@ -8,36 +8,62 @@ option parsing has been a builder python pattern (I forget what it's called)
 and it seemed like a pain in the ass even with it as simple as it was.  What  
 I wanted was to be able to just give a program the help text and for it to  
 figure out how to parse the arguments.  The format should be:
-  
+
 ```scala
 val helpText = "[ -fad ]"
 val arguments = " -a"
 Argh(helpText)(arguments)
 ```
-  
-Right now, it only supports single character flags, and for the arguments to  
-be in a single string, which sort of sucks.  However, I'm working on it in a  
-fun TDD way that I haven't experimented that much with before, and because the  
-way it should function is so straight forward, TDD works well for it.
 
-##History
-pirate used to be Argh, but I realized I was doing it completely wrong and  
-that I didn't understand how scala parsers worked, so I started over again  
-from the beginning.  I still don't know whether I prefer pirate or Argh,  
-and I might want to return to my Argh ways once I've figured out pirate, but  
-I've been able to be much more expressive by just parsing based on the raw  
-parsing library, rather than the RegexParsers String parsing library, which  
-did too much for me.  
-  
-After some time of toughing it out without regex, I realized it was just sort of  
-dumb to not use the RegexParsers library, so now I'm using a combination of RegexParsers  
-and raw Parsers.
+##Help Text
+Help text comes in several different flavors.  There are flags, values, and strings.  
 
-##DSL
+###Flags
+A flag looks like this: "-f".  Flags can be put together, like "-fad".  These flags  
+mean that you expect a boolean value, whether the argument "-f" or any one or more  
+of the arguments in "-fad" are passed to you.
 
-###Help Text
-Help text comes in several different flavors.  There are flags, 
+###Values
+A value looks like this: "-v type" where type is the datatype you expect to have passed in.  
+An example might be, "-n int" or "-D double".  The different types that are supported are  
+int, double, and string.
 
-###Arguments
-Should all be a single String of flags, no square brackets, started by a hyphen.  
+###Strings
+There are also named strings, which is especially useful for filenames.  A string can be  
+named anything except for the reserved keywords int, string, and double, and may look like  
+"input".
+
+###Options
+You may not want to pass in flags all of the time, so there is the option to not pass in flags.  
+This is denoted with square brackets.  These can wrap anything, and always mean that passing them  
+in is optional.
+
+##Arguments
+Should all be a single String, or array of Strings of flags, no square brackets,  
+started by a hyphen.  
 Example: " -faddd " (whitespace is fine, except in the flags).
+
+###Flags
+At least one flag must be passed in for a group of flags to be considered covered.  Multiple  
+flags can be passed in either by repeating them, or by passing multiple flags back together.  
+An example of that would be for " -acdf ", you can turn on both a and d by passing back either  
+* "-a -d"
+* "-ad"
+which are both considered valid.
+
+###Optional Arguments
+However, if you have one thing inside of the square brackets, you are  
+expected to match everything.  For example, if you have "[ -ab -cd ]", valid strings to  
+pass in would be "-a -c",  "-ab -d", "-dc -ba", "-d -d -b -a" and "".  However, "-ab"  
+would NOT be valid, because you don't include any of the flags from "-cd".
+
+###Order
+Flags can be passed in any order, and multiple times.  All times will be considered valid.  Values  
+can only be passed in once, but they are  also in any order.  However, they can only be passed  
+in any order within their "context".  For example, in "[ -a [ -c -d ]]", valid arguments are all  
+strings where:
+* The empty string is passed in.
+* Only the -a argument is passed in.
+* Both the -a and the -c and -d arguments are passed in, where -c and -d are always next to each other.  
+An example of the simplest invalid string with all of the right flags, just in the wrong order, is  
+"-c -a -d".

@@ -29,12 +29,8 @@ object Argh extends JavaTokenParsers {
 
   val EndBracketParser = WhitespaceParser ~> elem(']')
 
-  def OptionMultiArgSchema: Parser[Pair[Parser[Arguments], Boolean]] = {
-    println("about to move to multi")
-    val bleh = BeginBracketParser ~> MultiArgSchema <~ EndBracketParser map (Pair(_, false))
-    println("about to move out of multi")
-    bleh
-  }
+  def OptionMultiArgSchema: Parser[Parser[Arguments]] =
+    (BeginBracketParser ~> MultiArgSchema <~ EndBracketParser) map (opt(_) map (_ getOrElse Arguments.empty))
 
   val int = "int"
 
@@ -91,33 +87,41 @@ object Argh extends JavaTokenParsers {
 
   lazy val NumberParser = DoubleParser | IntegerParser
 
-  lazy val HyphenStartedSchema: Parser[Pair[Parser[Arguments], Boolean]] = HyphenParser ~> (NumberParser | AllFlagsParser) map (Pair(_, true))
+  lazy val HyphenStartedSchema: Parser[Parser[Arguments]] = HyphenParser ~> (NumberParser | AllFlagsParser)
 
-  val ArgSchema: Parser[Pair[Parser[Arguments], Boolean]] = (OptionMultiArgSchema | HyphenStartedSchema)
+  val ArgSchema: Parser[Parser[Arguments]] = (OptionMultiArgSchema | HyphenStartedSchema)
 
   def MultiArgSchema: Parser[Parser[Arguments]] = handleMultiArgsFancy(tmp)
 
-  lazy val tmp = repsep(ArgSchema, WhitespaceParser)
+  def tmp = repsep(ArgSchema, WhitespaceParser)
 
   def handleMultiArgs(top: Parser[List[Parser[Arguments]]]): Parser[Parser[Arguments]] =
     top map {parsers =>
-      parsers reduceOption {(first, second) => 
+      parsers reduceOption {(first, second) =>
         (first ~ second) map (arg => arg._1 + arg._2)
       } getOrElse success(Arguments.empty)
     }
 
-  def handleMultiArgsFancy(top: Parser[List[Pair[Parser[Arguments], Boolean]]]): Parser[Parser[Arguments]] =
+  def disableOption(parser: Parser[Arguments]): Parser[Arguments] = Parser { input =>
+    parser(input) match {
+      case s @ Success(argument, _) => if (argument.isEmpty) Failure("no empties", input) else s
+      case noSuccess => noSuccess
+    }
+  }
+
+  def handleMultiArgsFancy(top: Parser[List[Parser[Arguments]]]): Parser[Parser[Arguments]] =
     top map {list =>
-      val (nonoptional, optional) = list.partition(_._2)
-      andWithRepetition(optional map (_._1), nonoptional map (_._1),
+      andWithRepetition(Nil, list,
         (first: Arguments, second: Arguments) => first + second,
-        Arguments.empty)
+        Arguments.empty, disableOption)
     }
 
   def andWithRepetition[T](parsed: List[Parser[T]],
     unparsed: List[Parser[T]],
     reducer: (T, T) => T,
-    default: T): Parser[T] = andWithRepetition(ParserHelper(parsed, unparsed, reducer, default))
+    default: T,
+    disEnabler: Parser[T] => Parser[T]): Parser[T] =
+      andWithRepetition(ParserHelper(parsed, unparsed, reducer, default, disEnabler))
 
   private[this] def applyReducer[T](concat: ~[T, T], reducer: (T, T) => T) = concat match {
     case f ~ s => reducer(f, s)
@@ -126,31 +130,37 @@ object Argh extends JavaTokenParsers {
   case class ParserHelper[T](parsed: List[Parser[T]],
     unparsed: List[Parser[T]],
     reducer: (T, T) => T,
-    default: T) {
-    def useParser(parser: Parser[T]) = this.copy(parsed = parser :: this.parsed,
+    default: T,
+    disEnabler: Parser[T] => Parser[T]) {
+    def useParser(parser: Parser[T]) = this.copy(parsed = disEnabler(parser) :: this.parsed,
       unparsed = this.unparsed filterNot (_ == parser))
   }
 
   object ParserHelper {
-    def apply[T](list: List[Parser[T]], reducer: (T, T) => T, default: T): ParserHelper[T] =
-      ParserHelper(List(), list, reducer, default)
+    def apply[T](list: List[Parser[T]],
+      reducer: (T, T) => T,
+      default: T,
+      disEnabler: Parser[T] => Parser[T]): ParserHelper[T] =
+        ParserHelper(List(), list, reducer, default, disEnabler)
   }
 
-  private[this] def andWithRepetition[T](helper: ParserHelper[T]): Parser[T] = Pair(helper.unparsed, helper.parsed) match {
-    case (Nil, Nil) => success(helper.default)
-    case (Nil, list) => rep(list reduce (_ | _)) map {arg =>
-      arg reduceOption (helper.reducer(_, _)) getOrElse helper.default
+  private[this] def andWithRepetition[T](helper: ParserHelper[T]): Parser[T] =
+    Pair(helper.unparsed, helper.parsed) match {
+      case (Nil, Nil) => success(helper.default)
+      case (Nil, list) => rep(list reduce (_ | _)) map {arg =>
+        arg reduceOption (helper.reducer(_, _)) getOrElse helper.default
+      }
+      case (_, Nil) => parseUnparsed(helper)
+      case (_, _) => parseUnparsed(helper) | parseParsed(helper)
     }
-    case (_, Nil) => parseUnparsed(helper)
-    case (_, _) => parseUnparsed(helper) | parseParsed(helper)
-  }
 
   private[this] def parseParsed[T](helper: ParserHelper[T]) =
     (helper.parsed reduce (_ | _)) ~ andWithRepetition(helper) map {
       applyReducer(_, helper.reducer)
     }
 
-  private[this] def parseUnparsed[T](helper: ParserHelper[T]) = (helper.unparsed map {parser =>
+  private[this] def parseUnparsed[T](helper: ParserHelper[T]) =
+    (helper.unparsed map {parser =>
     parser ~ andWithRepetition(helper.useParser(parser)) map (
       applyReducer(_, helper.reducer)
     )
@@ -158,8 +168,8 @@ object Argh extends JavaTokenParsers {
 
 
   lazy val OptionArgSchema: Parser[Parser[Arguments]] =
-    BeginBracketParser ~> ArgSchema <~ EndBracketParser map {pair =>
-      opt(pair._1) map {
+    BeginBracketParser ~> ArgSchema <~ EndBracketParser map {arg =>
+      opt(arg) map {
         case Some(args) => args
         case None => Arguments.empty
       }
@@ -194,7 +204,7 @@ object Argh extends JavaTokenParsers {
       }
     }
 
-  lazy val PhrasedMAS = phrase(MultiArgSchema)
+  def PhrasedMAS = phrase(MultiArgSchema)
 
   lazy val FlagsAndStringsSchema: Parser[Parser[Arguments]] = opt(MultiArgSchema) ~ WhitespaceParser ~ opt(MultiStringSchema) map {
     case Some(args) ~ _ ~ Some(flags) => args ~ flags map { concat => concat._1 + concat._2 }
@@ -219,6 +229,8 @@ case class Arguments(flags: Set[Char], intMap: Map[Char, Int], doubleMap: Map[Ch
   def addFlag(flag: Char): Arguments = this.copy(flags = flags + flag)
 
   def +(args: Arguments): Arguments = Arguments(this.flags ++ args.flags, this.intMap ++ args.intMap, this.doubleMap ++ args.doubleMap, this.strings ++ args.strings)
+
+  def isEmpty = this == Arguments.empty
 }
 
 object Arguments {

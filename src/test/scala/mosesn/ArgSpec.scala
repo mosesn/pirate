@@ -7,9 +7,23 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import scala.util.parsing.input.CharSequenceReader
 import org.scalatest.matchers.ShouldMatchers
+import scala.util.parsing.combinator.RegexParsers
 
 @RunWith(classOf[JUnitRunner])
 class ArgSpec extends FunSpec with ShouldMatchers{
+  describe("Arguments") {
+    describe("empty") {
+      it("Should know empties are empty") {
+        assert(Arguments.empty.isEmpty)
+      }
+      it("Should know other things are empty") {
+        assert(Arguments(Set.empty[Char], Map.empty[Char, Int], Map.empty[Char, Double], Map.empty[String, String]).isEmpty)
+      }
+      it("Should know different things are empty") {
+        assert(Arguments(Set[Char](), Map[Char, Int](), Map[Char, Double](), Map[String, String]()).isEmpty)
+      }
+    }
+  }
   describe("Argh") {
     describe("apply") {
       it("Should handle empty help text.") {
@@ -251,8 +265,6 @@ class ArgSpec extends FunSpec with ShouldMatchers{
           Arguments.empty.copy(strings = Map("p" -> "pppp")))
       }
     }
-    //TODO MN
-    /*
     describe("HyphenStartedSchema") {
       it("Should take a flag and return a nice Arguments of just that flag.") {
         assert(Argh.HyphenStartedSchema(new CharSequenceReader("-a")).get(new CharSequenceReader("-a")).get === Arguments.empty.copy(flags = Set('a')))
@@ -343,7 +355,8 @@ class ArgSpec extends FunSpec with ShouldMatchers{
       it("Should take an optional double flag with spaces and parse nothing.") {
         assert(Argh.ArgSchema(new CharSequenceReader("[ -f double ]")).get(new CharSequenceReader("")).get === Arguments.empty)
       }
-    }*/
+    }
+
     describe("MultiArgSchema") {
       it("Should take a flag and return a nice Arguments of just that flag.") {
         assert(Argh.MultiArgSchema(new CharSequenceReader("-a")).get(new CharSequenceReader("-a")).get === Arguments.empty.copy(flags = Set('a')))
@@ -434,7 +447,9 @@ class ArgSpec extends FunSpec with ShouldMatchers{
         assert(Argh.MultiArgSchema(new CharSequenceReader("[ -lst [ -abc ]]")).get(new CharSequenceReader("")).get === Arguments.empty)
       }
       //TODO MN
-      /*
+      it("Should take one things, and weird nesting, and be ok with taking both in an option.") {
+        assert(Argh.MultiArgSchema(new CharSequenceReader("[[ -lst ]]")).get(new CharSequenceReader("-ls")).get === Arguments.empty.copy(flags=Set('l', 's')))
+      }
       it("Should take multiple things, and weird nesting, and be ok with taking both in an option.") {
         assert(Argh.MultiArgSchema(new CharSequenceReader("[[ -lst ] [ -abc ]]")).get(new CharSequenceReader("-ls -aba")).get === Arguments.empty.copy(flags=Set('l', 's', 'a', 'b')))
       }
@@ -447,7 +462,6 @@ class ArgSpec extends FunSpec with ShouldMatchers{
       it("Should take multiple things, and weird nesting, and be ok without taking anything in an option.") {
         assert(Argh.MultiArgSchema(new CharSequenceReader("[[ -lst ] [ -abc ]]")).get(new CharSequenceReader("")).get === Arguments.empty)
       }
-      */
     }
      describe("FlagsAndStringsSchema") {
        it("Should handle wc args") {
@@ -472,18 +486,9 @@ class ArgSpec extends FunSpec with ShouldMatchers{
            "[-H htmlpager] [-S section_list] [section]")).get(new CharSequenceReader("")).get ===
              Arguments.empty)
        }
-       //TODO MN
-       ignore("Should handle man args with some args") {
-         assert(Argh.PhraseFASSchema(new CharSequenceReader("[-acdfFhkKtwW]")).get(new CharSequenceReader("-acfkW")).get ===
+       it("Should handle man args with some args") {
+         assert(Argh.FlagsAndStringsSchema(new CharSequenceReader("[-acdfFhkKtwW -B int]")).get(new CharSequenceReader("-acfkW -B 3")).get ===
              Arguments.empty.copy(flags = Set('a', 'c', 'f', 'k', 'W'), intMap = Map('B' -> 3)))
-       }
-       //TODO MN
-       ignore("Should handle man args with lots of args") {
-         assert(Argh.FlagsAndStringsSchema(new CharSequenceReader("[-acdfFhkKtwW] " +
-           "[-m int] [-p string] [-C int] [-M int] [-P int] [-B int]" +
-           "[-H int] [-S int] [key]")).get(new CharSequenceReader("-acfkW -p crap -B 3 value")).get ===
-             Arguments.empty.copy(flags = Set('a', 'c', 'f', 'k', 'W'), intMap = Map('B' -> 3),
-                 strings = Map("p" -> "crap", "key" -> "value")))
        }
      }
   }
