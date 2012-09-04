@@ -12,7 +12,7 @@ figure out how to parse the arguments.  The format should be:
 ```scala
 val helpText = "[ -fad ]"
 val arguments = " -a"
-Argh(helpText)(arguments)
+Pirate(helpText)(arguments)
 ```
 
 ##Help Text
@@ -67,3 +67,17 @@ strings where:
 * Both the -a and the -c and -d arguments are passed in, where -c and -d are always next to each other.  
 An example of the simplest invalid string with all of the right flags, just in the wrong order, is  
 "-c -a -d".
+
+##TODO
+I have been following the suggestions on how to handle arguments from [The Art of Unix Programming](http://www.faqs.org/docs/artu/ch10s05.html).  
+  
+The UNIX style of parsing arguments is basically completely implemented, with only small adjustments  
+that might be desirable, such as adding the option of specifying which values are mutually exclusive,  
+although since there isn't a preexisting way of showing that in help text, it isn't a high priority.  
+  
+However, GNU style arguments haven't been implemented at all.  If there is interest, I don't think they  
+will be very hard to do, but I personally prefer UNIX style, so if no one else is using this, I won't  
+bother.  If you would like the functionality, feel free to file a github issue on me or email me about it.
+
+##Contributors
+[Moses Nakamura](http://github.com/mosesn)
