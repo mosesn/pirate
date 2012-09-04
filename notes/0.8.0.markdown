@@ -1,3 +1,8 @@
-This is the first release of pirate, and it has some neat features:
-* parses UNIX style help text naturally
-* has an extremely simple API, just the Pirate apply funtion
+This is the first release of pirate, and it has some neat features.  It parses UNIX style help text naturally, and has an extremely simple API, just the Pirate apply funtion.
+
+Here's an example of how it would parse the arguments for uniq.
+<pre>
+val helpText = "[-cdu] [-i] [-f int] [-s int] [input_file [output_file]]"
+val arguments = "-c -i -f 3 sorted_file".split(" ")
+Pirate(helpText)(arguments)
+</pre>
