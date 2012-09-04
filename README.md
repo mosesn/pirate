@@ -11,9 +11,32 @@ figure out how to parse the arguments.  The format should be:
 
 ```scala
 val helpText = "[ -fad ]"
-val arguments = " -a"
+val arguments = " -a".split(" ")
 Pirate(helpText)(arguments)
 ```
+
+##Examples
+###wc
+```scala
+val helpText = "[ -clmw ] [file]"
+val arguments = " -l /usr/share/dict/words"
+Pirate(helpText)(arguments).split(" ")
+```
+
+###uniq
+```scala
+val helpText = "[-cdu] [-i] [-f int] [-s int] [input_file [output_file]]"
+val arguments = "-c -i -f 3 sorted_file".split(" ")
+Pirate(helpText)(arguments)
+```
+
+###ls
+```scala
+val helpText = "[-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx] [file]"
+val arguments = " -a -l ".split(" ")
+Pirate(helpText)(arguments)
+```
+
 
 ##Help Text
 Help text comes in several different flavors.  There are flags, values, and strings.  
@@ -39,8 +62,7 @@ This is denoted with square brackets.  These can wrap anything, and always mean 
 in is optional.
 
 ##Arguments
-Should all be a single String, or array of Strings of flags, no square brackets,  
-started by a hyphen.  
+Should be an array of Strings of flags, no square brackets, started by a hyphen.  
 Example: " -faddd " (whitespace is fine, except in the flags).
 
 ###Flags

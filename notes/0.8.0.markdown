@@ -1,0 +1,3 @@
+This is the first release of pirate, and it has some neat features:
+* parses UNIX style help text naturally
+* has an extremely simple API, just the Pirate apply funtion

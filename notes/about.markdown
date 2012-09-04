@@ -1,0 +1,1 @@
+[Pirate](http://github.com/mosesn/pirate) parses CLI arguments effortlessly.
