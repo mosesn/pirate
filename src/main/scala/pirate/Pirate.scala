@@ -1,4 +1,4 @@
-package pirate
+package com.mosesn.pirate
 
 import scala.util.parsing.input.CharSequenceReader
 

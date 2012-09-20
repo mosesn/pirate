@@ -1,4 +1,4 @@
-package pirate
+package com.mosesn.pirate
 
 case class Arguments(flags: Set[Char],
   intMap: Map[Char, Int],

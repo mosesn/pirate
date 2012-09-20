@@ -1,4 +1,4 @@
-package pirate
+package com.mosesn.pirate
 
 trait UnixParsers extends HyphenatedParsers {
   lazy val MultiArgSchema: Schema = rep(ArgSchema) map {

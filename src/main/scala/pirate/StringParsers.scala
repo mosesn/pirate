@@ -1,4 +1,4 @@
-package pirate
+package com.mosesn.pirate
 
 trait StringParsers extends SchemaParsers {
   lazy val MultiStringSchema: Schema = rep(StringSchema) map {

@@ -1,4 +1,4 @@
-package pirate
+package com.mosesn.pirate
 
 import org.scalatest.FunSpec
 import org.junit.runner.RunWith

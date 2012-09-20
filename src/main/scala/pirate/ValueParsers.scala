@@ -1,4 +1,4 @@
-package pirate
+package com.mosesn.pirate
 
 trait ValueParsers extends SchemaParsers{
   type FlagValueSchema = Parser[Char] => Schema

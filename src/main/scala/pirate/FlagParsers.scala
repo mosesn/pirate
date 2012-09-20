@@ -1,4 +1,4 @@
-package pirate
+package com.mosesn.pirate
 
 trait FlagParsers extends SchemaParsers {
   lazy val FlagSchema: Schema = """[A-Za-z]+""".r map (OptionsParser)
