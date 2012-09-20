@@ -10,6 +10,8 @@ I wanted was to be able to just give a program the help text and for it to
 figure out how to parse the arguments.  The format should be:
 
 ```scala
+import com.mosesn.pirate.Pirate
+
 val helpText = "[ -fad ]"
 val arguments = " -a".split(" ")
 Pirate(helpText)(arguments)
@@ -18,6 +20,8 @@ Pirate(helpText)(arguments)
 ##Examples
 ###wc
 ```scala
+import com.mosesn.pirate.Pirate
+
 val helpText = "[ -clmw ] [file]"
 val arguments = " -l /usr/share/dict/words"
 Pirate(helpText)(arguments).split(" ")
@@ -25,6 +29,8 @@ Pirate(helpText)(arguments).split(" ")
 
 ###uniq
 ```scala
+import com.mosesn.pirate.Pirate
+
 val helpText = "[-cdu] [-i] [-f int] [-s int] [input_file [output_file]]"
 val arguments = "-c -i -f 3 sorted_file".split(" ")
 Pirate(helpText)(arguments)
@@ -32,11 +38,20 @@ Pirate(helpText)(arguments)
 
 ###ls
 ```scala
+import com.mosesn.pirate.Pirate
+
 val helpText = "[-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx] [file]"
 val arguments = " -a -l ".split(" ")
 Pirate(helpText)(arguments)
 ```
 
+## Install
+So you want to install pirate, eh?  Put this in your build.sbt file:  
+```scala
+resolvers += "sonatype" at "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+
+libraryDependencies ++= Seq("com.mosesn" %% "pirate" % "0.1.0")
+```
 
 ##Help Text
 Help text comes in several different flavors.  There are flags, values, and strings.  
