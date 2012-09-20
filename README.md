@@ -48,7 +48,7 @@ Pirate(helpText)(arguments)
 ## Install
 So you want to install pirate, eh?  Put this in your build.sbt file:  
 ```scala
-resolvers += "sonatype" at "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+resolvers += "sonatype" at "https://oss.sonatype.org/content/repositories/releases/"
 
 libraryDependencies ++= Seq("com.mosesn" %% "pirate" % "0.1.0")
 ```
