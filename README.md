@@ -23,8 +23,8 @@ Pirate(helpText)(arguments)
 import com.mosesn.pirate.Pirate
 
 val helpText = "[ -clmw ] [file]"
-val arguments = " -l /usr/share/dict/words"
-Pirate(helpText)(arguments).split(" ")
+val arguments = " -l /usr/share/dict/words".split(" ")
+Pirate(helpText)(arguments)
 ```
 
 ###uniq
