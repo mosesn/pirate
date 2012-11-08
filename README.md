@@ -45,6 +45,21 @@ val arguments = " -a -l ".split(" ")
 Pirate(helpText)(arguments)
 ```
 
+###Java
+You can also use Pirate in java.  However, the curried functions are turned into methods with   
+two arguments, and the values on the Arguments object are turned into methods.
+```java
+import com.mosesn.pirate.Pirate;
+import com.mosesn.pirate.Arguments;
+
+public class Main {
+    public static void main(String[] args) {
+        Arguments arg = Pirate.apply("[ -f ]", args);
+        System.out.println(arg.flags().size());
+    }
+}
+```
+
 ## Install
 So you want to install pirate, eh?  Put this in your build.sbt file:  
 ```scala
