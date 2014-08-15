@@ -1,13 +1,12 @@
 package com.mosesn.pirate
 
 import org.junit.runner.RunWith
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSpec
 import scala.util.parsing.input.CharSequenceReader
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class UnixParsersSpec extends FunSpec with ShouldMatchers {
+class UnixParsersSpec extends FunSpec {
   describe("UnixParsers") {
     describe("ArgSchema") {
       it("Should take a flag and return a nice Arguments of just that flag.") {

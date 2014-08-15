@@ -1,13 +1,12 @@
-package pirate
+package com.mosesn.pirate
 
 import org.junit.runner.RunWith
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSpec
 import org.scalatest.junit.JUnitRunner
 import scala.util.parsing.input.CharSequenceReader
 
 @RunWith(classOf[JUnitRunner])
-class StringParsersSpec extends FunSpec with ShouldMatchers {
+class StringParsersSpec extends FunSpec {
   describe("StringParsers") {
     describe("RawStringSchema") {
       it("Should be able to take a single string and parse it.") {

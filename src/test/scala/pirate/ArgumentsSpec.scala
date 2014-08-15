@@ -1,12 +1,11 @@
 package com.mosesn.pirate
 
 import org.junit.runner.RunWith
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSpec
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class ArgumentsSpec extends FunSpec with ShouldMatchers{
+class ArgumentsSpec extends FunSpec {
   describe("Arguments") {
     describe("empty") {
       it("Should know empties are empty") {

@@ -1,13 +1,12 @@
 package com.mosesn.pirate
 
 import org.junit.runner.RunWith
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSpec
 import scala.util.parsing.input.CharSequenceReader
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class FlagParsersSpec extends FunSpec with ShouldMatchers {
+class FlagParsersSpec extends FunSpec {
   describe("FlagParsers") {
     describe("OptFlagParser") {
       it("Should take a one length string and parse that one character.") {

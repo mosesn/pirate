@@ -1,13 +1,26 @@
 name := "pirate"
 
-version := "0.1.0"
+version := "0.1.2"
 
-scalaVersion := "2.9.2"
+scalaVersion := "2.11.2"
+
+crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.4", "2.11.2")
 
 organization := "com.mosesn"
 
-libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "1.7.1" % "test",
-  "junit" % "junit" % "4.8.1" % "test")
+libraryDependencies <++= scalaVersion {
+  case version if version startsWith "2.9." =>
+    Seq("org.scalatest" %% "scalatest" % "1.9.2" % "test")
+  case version if version startsWith "2.10." =>
+    Seq("org.scalatest" %% "scalatest" % "2.2.1" % "test")
+  case version if version startsWith "2.11." =>
+    Seq(
+      "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2"
+    )
+}
+
+libraryDependencies += "junit" % "junit" % "4.11" % "test"
 
 scalacOptions += "-deprecation"
 

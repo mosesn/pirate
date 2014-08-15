@@ -6,11 +6,10 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import scala.util.parsing.input.CharSequenceReader
-import org.scalatest.matchers.ShouldMatchers
 import scala.util.parsing.combinator.RegexParsers
 
 @RunWith(classOf[JUnitRunner])
-class PirateSpec extends FunSpec with ShouldMatchers{
+class PirateSpec extends FunSpec {
   describe("Pirate") {
     describe("apply") {
       it("Should handle empty help text.") {

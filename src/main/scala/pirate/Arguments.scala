@@ -26,9 +26,9 @@ object Arguments {
 
   def flags(chars: Set[Char]) = Arguments.empty.copy(flags = chars)
 
-  def named(pair: Pair[String, String]) = Arguments.empty.copy(strings = Map(pair))
+  def named(pair: (String, String)) = Arguments.empty.copy(strings = Map(pair))
 
-  def int(pair: Pair[Char, Int]) = Arguments.empty.copy(intMap = Map(pair))
+  def int(pair: (Char, Int)) = Arguments.empty.copy(intMap = Map(pair))
 
-  def double(pair: Pair[Char, Double]) = Arguments.empty.copy(doubleMap = Map(pair))
+  def double(pair: (Char, Double)) = Arguments.empty.copy(doubleMap = Map(pair))
 }
